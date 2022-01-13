@@ -1,0 +1,19 @@
+nmds<-read.table('nmds R.txt', header=TRUE, sep="\t", na.strings="NA", dec=".", strip.white=TRUE)
+nmds
+nmdssqrt<-sqrt(nmds)
+nmdssqrt
+
+nmds1<-metaMDS(nmdssqrt, distance='bray')
+nmds1
+
+metaMDS(nmds1,”bray”)
+
+windows(title='NMDS Bray')
+
+plot(nmds1,type='t', main=paste('NMDS/Bray-Stress=',round(nmds1$stress,3)))
+
+
+attributes(nmds1)
+nmds1$points
+write.table(nmds1$points, 'nmdspontos.txt', sep='\t')
+write.table(nmds1$species, 'nmdsspecies.txt', sep='\t')

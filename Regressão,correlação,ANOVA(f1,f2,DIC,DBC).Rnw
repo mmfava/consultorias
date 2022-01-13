@@ -1,0 +1,195 @@
+\documentclass{article}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+%%%%%    REGRESSÃO   %%%%%
+
+<<>>=
+altura=c(1.74,1.93,2.41,5.94,7.33,9.27)
+diametro=c(10,12,14,23,40,59)
+@
+
+a)Avaliar a associação (correlação
+a.1) Avaliar os pressupostos antes de realizar os cálculos de associação
+
+<<>>=
+shapiro.test(altura) #normal
+shapiro.test(diametro) #normal
+@
+
+a.2)Cálculos de associação:r; significância
+
+plot(altura,diametro)
+
+<<>>=
+plot(altura,diametro)
+abline(lm(diametro~altura)) #quando se usa ~, ou seja, em função de, a sequencia é y~x. quando se usa virgura, é x,y
+cor.test(altura,diametro, method = "pearson", alternative = "greater", conf.level=0.95)
+@
+
+r= 0.96 p=0.001 h0: r=0 hA:r>0 #ha aceita
+
+b) Representar matematicamente esta associação
+b.1) Criação do modelo
+
+<<>>=
+m1=lm(diametro~altura)
+m1
+@
+
+intercept: coeficiente linear
+altura: coeficiente angular
+A cada 1m de altura, o diâmetro aumenta 5.83
+O intercept diz que em 0 altura, a planta dem -1.48 de diâmetro. Por isso ser biológicamente impossível, trata-se de erro de medida.
+
+b.2)Significância do modelo
+
+<<>>=
+summary(m1)
+@
+
+O coeficiente angular é significativo (p=0.002), o linear não (p=0.77)
+Se o coeficienet angular não for significativo (p>0.05), não usar o modelo.
+Se o coeficiente linear não for significativo (p>0.05), pode usar o modelo, mas b=0 (coeficiente linar=0).
+Se o coeficiente angular for p<0.05 pode usar o modelo.
+Se o coeficiente linear for p<0.05 pode usar o modelo e considerar o valor do coeficiente (b). 
+
+Nesse caso, posso usar o modelo (a=0.003; b=0)
+
+c)Avaliar a normalidade dos residuos
+
+<<>>=
+predito=fitted(m1)
+residuo=resid(m1)
+residuo
+shapiro.test(residuo)
+
+segments(altura,predito,altura,diametro)
+
+@
+
+A maioria do tamanho dos resíduos está semelhante, isso também indica normalidade.
+Por fim: calcular o coeficiente de determinação
+
+<<>>=
+(cor(altura,diametro))^2
+@
+
+Esse valor já saiu no summary como r² adjusted. Aqui está como r²
+r²: diametro=5.83*altura-1.49
+r² adjusted: diametro=5.83*altura %tirou o erro
+Como o b não foi significativo (b=-1.49), consideramos b=0 e usamos o r ajustado.
+O valor de p para o r² (p=0.02) está relacionado com o coeficiente angular, visto que o p do coeficiente angular (altura) teve o mesmo valor.
+
+Interpretação: a função da reta de regressão (y=5.83*x) explica 89\% da variação dos dados observados (r² adjusted). A cada 1m de crescimento em altura, o diâmetro acresce em 5.83cm.
+
+Coeficiente de determinação=coeficiente de regressão
+
+
+%%%%%     ANOVA     %%%%%
+
+Usa-se anova quando o fator (variável explicativa) é qualitativa e a variável resposta é quantitativa.
+
+Se a experimentação não está aleatória, não usa-se DIC ou DBC.
+
+DIC: delineamento inteiramente casualizado
+DBC: delineamento em blocos casualizado
+Esquema: relacionado com a variável independente (FATOR)
+1 fator: ANOVA fator unico
+2 fatores: ANOVA fator duplo
+...
+
+O fator é algo que eu quero saber se tem efeito sobre alguma coisa.
+DBC: o bloco é um efeito conhecido
+
+DIC: fator> local; níveis> A,B,C; variável dependente> peso
+DBC: bloco> curva de nível (300,230,170)-efeito conhecido; fator> tratamento, temperatura, irrigação; níveis> controle e tratamento; variável dependente> peso
+
+ANOVA -> F= QMTratamentos/QMResíduos
+Tabela F -> se F calculado > F crítico, p-valor < 0.05
+            se F calculado < F crítico, p-valor > 0.05
+
+TESTES DE ACOMPANHAMENTO/POST-HOC TEST
+Tukey-HSD-> usado quando temos n' iguais/homogêneo entre os níveis
+Tukey-NHSD-> n' diferentes
+LSD
+Bonferroni
+SKotKnot
+...
+
+a)Avalie se os locais apresentam efeito sober o peso
+DIC fator único/simples
+
+b)Avalie se a locais e temperatura promovem efeito sobre o peso
+DIC fator duplo
+
+c)Sabendo que a curva de nível promove um efeito sobre o peso das plantas, avalie se locais e temperatura elevam o efeito sobre o peso.
+DBC fator duplo %já sei que promove efeito; serão avaliados local e TºC
+
+<<>>=
+exerc=read.csv2(file.choose(),header=TRUE,dec=",",sep=";")
+library(ExpDes.pt)
+attach(exerc)
+@
+
+
+a) Dic fator único
+dic(fator,VD,quali=TRUE,mcomp="tukey",sigF=0.05,sigT=0.05)
+<<>>=
+dic(local,peso, quali=TRUE, mcomp="tukey", sigF=0.05, sigT=0.05)
+
+@
+
+CV < 20, os dados variam de forma homogênea. Quando > 20\%, variam de forma anormal.
+p valor dos tratamentos foi <0.05, portanto pelo menos um dos locais é diferente e apresenta efeito sobre o peso.
+Shapiro: p-valor>0.05, portanto os resíduos estão em normalidade
+
+Tukey: o tratamento A apresentou media inferior aos tratamentos B e C.
+
+<<>>=
+bartlett.test(peso~local) #avalia a homocedasticidade
+#p>0.05, dados em homocedasticidade
+
+@
+
+b) DIC fator duplo
+
+<<>>=
+fat2.dic(local,temperatura,peso, quali=c(TRUE, TRUE), mcomp="tukey", fac.names=c("Local","Temperatura"), sigT = 0.05, sigF = 0.05)
+interaction.plot(local,temperatura,peso) #fator 1, fator 2, variável resposta
+@
+
+As curvas do plot demonstram que não existe interação.
+p-valor do local <0.05, portanto o local tem efeito sobre o peso.
+p-valor da temperatura <0.05, portanto a temperatura tem efeito sobre o peso.
+Juntos, local e temperatura tem p-valor >0.05, portanto juntos não tem efeito sobre o peso.
+Resíduos em normalidade p>0.05.
+CV < 20\%, homocedasticidade
+
+Tukey: tratamentos C e B possuem médias maiores quando comparadas com o tratamento A. 
+
+c) DBC fator duplo
+
+<<>>=
+fat2.dbc(local, temperatura, curva, peso, quali = c(TRUE, TRUE), mcomp = "tukey", fac.names = c("Local", "Temperatura"), sigT = 0.05, sigF = 0.05)
+
+@
+
+p-valor do bloco >0.05, portanto não há diferença entre as curvas de níveis em promover efeito sobre o peso
+p-valor do local <0.05, tem efeito sobre o peso
+p-valor da temperatura <0.05, tem efeito sobre o peso
+p-valor da Interação local*temperatura >0.05, não há efeito sobre o peso
+
+CV<20\%, homocedasticidade. Por haver um controle local, diminuem os erros/resíduos em comparação ao DIC.
+Resíduos em normalidade
+
+Tukey: os tres tratamentos apresentaram médias diferentes.
+
+
+
+
+
+
+
+\end{document}
