@@ -1,46 +1,51 @@
+# Script R para Análise de Sobrevivência
+# Marília Melo Favalesso - mariliabioufpr@gmail.com
 
-setwd("C:/Users/Ana/Dropbox/Predation risk")
-setwd("~/Dropbox/Predation risk")
-dados = read.table("risco2.csv",h=T,sep=";")
+# Carregar dados
+dados_sobrevivencia <- read.table("risco.csv", header = TRUE, sep = ";")
+attach(dados_sobrevivencia)
 
-attach(dados)
+# Construção de um diagrama de dispersão de tempo em função da idade do fragmento
+plot(tempo.seg ~ frag, main = "Diagrama de Dispersão: Tempo vs Idade do Fragmento", 
+     xlab = "Idade do Fragmento", ylab = "Tempo (segundos)", pch = 19, col = "blue")
 
-## Constru??o de um diagrama de dispers?o de tempo em fun??o da idade do fragmento
-plot(tempo.seg~frag)
-
-## Constru??o do modelo de sobreviv?ncia
+# Carregar o pacote survival
 library(survival)
 
-m1=survreg(Surv(tempo.seg,ataque)~frag,dist="exponential")
-m1
+# Construção do modelo de sobrevivência usando distribuição exponencial
+modelo_exp <- survreg(Surv(tempo.seg, ataque) ~ frag, dist = "exponential")
+summary(modelo_exp)
 
-summary(m1)
-par(mar=c(5,6,4,2))
-plot(survfit(Surv(tempo.seg,ataque)~frag),ylab="",cex.axis=1.2,,pch=16,cex.lab=1.2,xlab="",lty=c(1:7),lwd=4,col=c("black","grey","antiquewhite2", "antiquewhite3", "antiquewhite4", "green3","forestgreen"),bty="l",font.lab=2)
-legend("topright",c("0","","","","","",""),lty=1:7,lwd=4,bty="n",col=c("black","grey","antiquewhite2", "antiquewhite3", "antiquewhite4", "green3","forestgreen"),cex=1.2)
+# Plot do modelo de sobrevivência
+par(mar = c(5, 6, 4, 2))
+plot(survfit(Surv(tempo.seg, ataque) ~ frag), ylab = "Probabilidade de Sobrevivência", 
+     cex.axis = 1.2, pch = 16, cex.lab = 1.2, xlab = "Tempo (segundos)", 
+     lty = 1:7, lwd = 4, col = c("black", "grey", "antiquewhite2", 
+                                 "antiquewhite3", "antiquewhite4", 
+                                 "green3", "forestgreen"), bty = "l", 
+     font.lab = 2, main = "Curva de Sobrevivência")
+legend("topright", legend = levels(frag), lty = 1:7, lwd = 4, 
+       col = c("black", "grey", "antiquewhite2", "antiquewhite3", 
+               "antiquewhite4", "green3", "forestgreen"), 
+       cex = 1.2, bty = "n")
 
-m2=survreg(Surv(tempo.seg,ataque)~frag)
-m2
+# Modelo de sobrevivência sem especificação de distribuição
+modelo_default <- survreg(Surv(tempo.seg, ataque) ~ frag)
+summary(modelo_default)
 
-AIC(m1)
-AIC(m2)
+# Comparação dos modelos usando AIC
+AIC(modelo_exp)
+AIC(modelo_default)
 
-summary(m2)
+# Modelo de sobrevivência usando distribuição lognormal
+modelo_lognormal <- survreg(Surv(tempo.seg, ataque) ~ frag, dist = "lognormal")
+summary(modelo_lognormal)
+AIC(modelo_lognormal)
 
-m3=survreg(Surv(tempo.seg,ataque)~frag,dist="lognormal")
-m3
+# Análise dos resíduos e predições do modelo lognormal
+residuos_lognormal <- resid(object = modelo_lognormal)
+predicoes_lognormal <- predict(modelo_lognormal)
 
-a = frag
-a
-
-levels(a)
-levels(a)[1:2]<-"0e6"
-levels(um2)
-
-anova(m3)
-summary(m3)
-AIC(m3)
-residuo=resid(object=m3)
-residuo
-predito1=predict(m3)
-predito1
+# Visualização dos resíduos e predições
+residuos_lognormal
+predicoes_lognormal
